@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>miniGames.io</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/fontsource@latest/fonts/inter/stylesheet.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a1a;
+            --text-primary: #e5e5e5;
+            --text-secondary: #a3a3a3;
+            --accent-color: #dc2626;
+            --accent-hover: #b91c1c;
+            --border-color: #333333;
+            --card-bg: #18181b;
+        }
+
+        /* Theme: Galaxy Purple */
+        body.theme-galaxy {
+            --bg-primary: #0f0518;
+            --bg-secondary: #1e0b36;
+            --text-primary: #f3e8ff;
+            --text-secondary: #d8b4fe;
+            --accent-color: #9333ea;
+            --accent-hover: #7e22ce;
+            --border-color: #4c1d95;
+            --card-bg: #2e1065;
+        }
+
+        /* Theme: Blue Classic */
+        body.theme-blue {
+            --bg-primary: #020617;
+            --bg-secondary: #0f172a;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --accent-color: #2563eb;
+            --accent-hover: #1d4ed8;
+            --border-color: #1e3a8a;
+            --card-bg: #1e293b;
+        }
+
+        /* Theme: Dark (Default) */
+        body.theme-dark {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #171717;
+            --text-primary: #e5e5e5;
+            --text-secondary: #a3a3a3;
+            --accent-color: #dc2626;
+            --accent-hover: #b91c1c;
+            --border-color: #333333;
+            --card-bg: #18181b;
+        }
+
+        /* Theme: White */
+        body.theme-white {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f3f4f6;
+            --text-primary: #111827;
+            --text-secondary: #4b5563;
+            --accent-color: #2563eb;
+            --accent-hover: #1d4ed8;
+            --border-color: #d1d5db;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .game-card {
+            transition: all 0.3s ease;
+            border: 1px solid var(--border-color);
+            background-color: var(--card-bg);
+        }
+
+        .game-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-color);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .nav-link {
+            position: relative;
+            color: var(--text-secondary);
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--accent-color);
+            transition: width 0.3s;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        /* Chess specific styles */
+        .chess-board-container {
+            display: inline-block;
+            padding: 10px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .chess-board {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            width: min(80vw, 500px);
+            height: min(80vw, 500px);
+            border: 2px solid var(--border-color);
+        }
+
+        .chess-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            cursor: pointer;
+            position: relative;
+            aspect-ratio: 1 / 1;
+        }
+
+        .chess-cell.light {
+            background-color: #eeeed2;
+        }
+
+        .chess-cell.dark {
+            background-color: #769656;
+        }
+
+        .chess-cell.selected {
+            background-color: #f6f669 !important;
+        }
+
+        .chess-cell.valid-move::after {
+            content: '';
+            position: absolute;
+            width: 30%;
+            height: 30%;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 50%;
+        }
+
+        .chess-cell.valid-capture {
+            background-color: #ff6b6b !important;
+        }
+
+        .chess-piece-white {
+            color: #fff;
+            text-shadow: 0 0 2px #000, 0 0 2px #000, 0 0 2px #000, 0 0 2px #000;
+            filter: drop-shadow(0 0 1px #000);
+        }
+
+        .chess-piece-black {
+            color: #000;
+        }
+
+        /* Settings Modal */
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+        }
+
+        .setting-option {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .setting-option:hover {
+            background-color: var(--bg-secondary);
+        }
+
+        .setting-option.active {
+            border-color: var(--accent-color);
+            background-color: var(--bg-secondary);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="theme-dark min-h-screen">
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-50 border-b transition-colors duration-300" style="background-color: var(--bg-secondary); border-color: var(--border-color);">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-2 cursor-pointer" onclick="showHome()">
+                    <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background-color: var(--accent-color);">
+                        <span class="text-white font-bold text-lg">M</span>
+                    </div>
+                    <span class="text-xl font-bold" style="color: var(--text-primary);">miniGames<span style="color: var(--accent-color);">.io</span></span>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-6">
+                    <button onclick="showHome()" class="nav-link transition" data-lang="home">Главная</button>
+                    <button onclick="showGame('tictactoe')" class="nav-link transition" data-lang="tictactoe">Крестики-Нолики</button>
+                    <button onclick="showGame('chess')" class="nav-link transition" data-lang="chess">Шахматы</button>
+                    <button onclick="showGame('dice')" class="nav-link transition" data-lang="dice">Кости</button>
+                </div>
+
+                <div class="flex items-center space-x-3">
+                    <!-- Help Button -->
+                    <button onclick="openHelpModal()" class="px-4 py-2 rounded-lg text-sm font-semibold transition hover:bg-opacity-10 hover:bg-gray-500 flex items-center space-x-2" style="color: var(--text-primary); border: 1px solid var(--border-color);">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span data-lang="help">Помощь</span>
+                    </button>
+
+                    <!-- Settings Button -->
+                    <button onclick="openSettings()" class="p-2 rounded-full hover:bg-opacity-10 hover:bg-gray-500 transition" title="Настройки">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--text-primary);">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </button>
+                    
+                    <div class="md:hidden">
+                        <button onclick="toggleMobileMenu()" class="p-2" style="color: var(--text-primary);">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobileMenu" class="hidden border-t transition-colors duration-300" style="background-color: var(--bg-secondary); border-color: var(--border-color);">
+            <div class="px-2 pt-2 pb-3 space-y-1">
+                <button onclick="showHome(); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded hover:bg-opacity-10 hover:bg-gray-500" style="color: var(--text-primary);" data-lang="home">Главная</button>
+                <button onclick="showGame('tictactoe'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded hover:bg-opacity-10 hover:bg-gray-500" style="color: var(--text-primary);" data-lang="tictactoe">Крестики-Нолики</button>
+                <button onclick="showGame('chess'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded hover:bg-opacity-10 hover:bg-gray-500" style="color: var(--text-primary);" data-lang="chess">Шахматы</button>
+                <button onclick="showGame('dice'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded hover:bg-opacity-10 hover:bg-gray-500" style="color: var(--text-primary);" data-lang="dice">Кости</button>
+                <button onclick="openHelpModal(); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded hover:bg-opacity-10 hover:bg-gray-500" style="color: var(--text-primary);" data-lang="help">Помощь</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center modal-overlay">
+        <div class="rounded-2xl shadow-2xl w-full max-w-md p-6 m-4 transform transition-all" style="background-color: var(--bg-secondary); border: 1px solid var(--border-color);">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold" style="color: var(--text-primary);" data-lang="support_title">Поддержка и Помощь</h3>
+                <button onclick="closeHelpModal()" class="p-1 rounded-full hover:bg-opacity-10 hover:bg-gray-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--text-primary);">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <!-- GitHub Link -->
+                <a href="https://github.com/NIK-dev001" target="_blank" class="flex items-center p-4 rounded-xl border-2 hover:border-opacity-50 transition group" style="border-color: var(--border-color); background-color: var(--bg-primary);">
+                    <div class="p-3 rounded-full mr-4" style="background-color: var(--bg-secondary);">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" style="color: var(--text-primary);">
+                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h4 class="font-bold" style="color: var(--text-primary);">GitHub</h4>
+                        <p class="text-sm" style="color: var(--text-secondary);">@NIK-dev001</p>
+                    </div>
+                </a>
+
+                <!-- Email Support -->
+                <a href="mailto:nik.gg.00@INBOX.RU" class="flex items-center p-4 rounded-xl border-2 hover:border-opacity-50 transition group" style="border-color: var(--border-color); background-color: var(--bg-primary);">
+                    <div class="p-3 rounded-full mr-4" style="background-color: var(--bg-secondary);">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--text-primary);">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h4 class="font-bold" style="color: var(--text-primary);" data-lang="email_support">Email Поддержка</h4>
+                        <p class="text-sm" style="color: var(--text-secondary);">nik.gg.00@INBOX.RU</p>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="mt-6 text-center">
+                <p class="text-xs" style="color: var(--text-secondary);" data-lang="copyright_footer">© 2026 NIK-dev001. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center modal-overlay">
+        <div class="rounded-2xl shadow-2xl w-full max-w-md p-6 m-4 transform transition-all" style="background-color: var(--bg-secondary); border: 1px solid var(--border-color);">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold" style="color: var(--text-primary);" data-lang="settings">Настройки</h3>
+                <button onclick="closeSettings()" class="p-1 rounded-full hover:bg-opacity-10 hover:bg-gray-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--text-primary);">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Language Setting -->
+            <div class="mb-8">
+                <h4 class="text-sm font-semibold uppercase tracking-wider mb-3" style="color: var(--text-secondary);" data-lang="language">Язык</h4>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="setting-option active p-4 rounded-xl border-2 flex items-center justify-center space-x-2" onclick="setLanguage('ru')" id="lang-ru">
+                        <span class="text-2xl">🇷🇺</span>
+                        <span class="font-medium" style="color: var(--text-primary);">Русский</span>
+                    </div>
+                    <div class="setting-option p-4 rounded-xl border-2 flex items-center justify-center space-x-2" onclick="setLanguage('en')" id="lang-en">
+                        <span class="text-2xl">🇬🇧</span>
+                        <span class="font-medium" style="color: var(--text-primary);">English</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Theme Setting -->
+            <div>
+                <h4 class="text-sm font-semibold uppercase tracking-wider mb-3" style="color: var(--text-secondary);" data-lang="theme">Тема оформления</h4>
+                <div class="space-y-3">
+                    <div class="setting-option active p-3 rounded-xl border-2 flex items-center justify-between" onclick="setTheme('dark')" id="theme-dark">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-6 h-6 rounded-full bg-zinc-900 border border-zinc-700"></div>
+                            <span style="color: var(--text-primary);" data-lang="theme_dark">Dark Classic (Red)</span>
+                        </div>
+                        <div class="w-4 h-4 rounded-full border-2" style="border-color: var(--accent-color);"></div>
+                    </div>
+                    
+                    <div class="setting-option p-3 rounded-xl border-2 flex items-center justify-between" onclick="setTheme('galaxy')" id="theme-galaxy">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-6 h-6 rounded-full bg-purple-900 border border-purple-700"></div>
+                            <span style="color: var(--text-primary);" data-lang="theme_galaxy">Galaxy Purple</span>
+                        </div>
+                        <div class="w-4 h-4 rounded-full border-2 border-transparent"></div>
+                    </div>
+
+                    <div class="setting-option p-3 rounded-xl border-2 flex items-center justify-between" onclick="setTheme('blue')" id="theme-blue">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-6 h-6 rounded-full bg-blue-900 border border-blue-700"></div>
+                            <span style="color: var(--text-primary);" data-lang="theme_blue">Blue Classic</span>
+                        </div>
+                        <div class="w-4 h-4 rounded-full border-2 border-transparent"></div>
+                    </div>
+
+                    <div class="setting-option p-3 rounded-xl border-2 flex items-center justify-between" onclick="setTheme('white')" id="theme-white">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-6 h-6 rounded-full bg-white border border-gray-300"></div>
+                            <span style="color: var(--text-primary);" data-lang="theme_white">White Light</span>
+                        </div>
+                        <div class="w-4 h-4 rounded-full border-2 border-transparent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Home Page -->
+    <div id="homePage" class="fade-in">
+        <!-- Hero Section -->
+        <section class="relative overflow-hidden py-20">
+            <div class="absolute inset-0 opacity-10" style="background: radial-gradient(circle at center, var(--accent-color) 0%, transparent 70%);"></div>
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+                <div class="text-center">
+                    <h1 class="text-5xl md:text-7xl font-bold mb-6">
+                        <span data-lang="hero_title_1">Играй в</span> <span style="color: var(--accent-color);" data-lang="hero_title_2">мини-игры</span>
+                    </h1>
+                    <p class="text-xl mb-8 max-w-2xl mx-auto" style="color: var(--text-secondary);" data-lang="hero_desc">
+                        Коллекция увлекательных браузерных игр с ботами. Выбирай, играй и побеждай!
+                    </p>
+                    <button onclick="document.getElementById('games').scrollIntoView({behavior: 'smooth'})" class="btn-primary px-8 py-4 rounded-full text-white font-semibold text-lg" data-lang="start_game">
+                        Начать игру
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Games Grid -->
+        <section id="games" class="py-16">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="text-3xl font-bold mb-12 text-center" data-lang="our_games">Наши игры</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Tic Tac Toe Card -->
+                    <div class="game-card rounded-2xl overflow-hidden cursor-pointer" onclick="showGame('tictactoe')">
+                        <div class="h-48 flex items-center justify-center" style="background: linear-gradient(135deg, var(--accent-color), var(--bg-secondary));">
+                            <div class="grid grid-cols-3 gap-2 p-4">
+                                <div class="w-12 h-12 bg-white/20 rounded flex items-center justify-center text-2xl text-white"></div>
+                                <div class="w-12 h-12 bg-white/20 rounded flex items-center justify-center text-2xl text-white">○</div>
+                                <div class="w-12 h-12 bg-white/20 rounded flex items-center justify-center text-2xl text-white">✕</div>
+                                <div class="w-12 h-12 bg-white/20 rounded flex items-center justify-center text-2xl text-white">○</div>
+                                <div class="w-12 h-12 bg-white/20 rounded flex items-center justify-center text-2xl text-white">✕</div>
+                                <div class="w-12 h-12 bg-white/20 rounded flex items-center justify-center text-2xl text-white">○</div>
+                                <div class="w-12 h-12 bg-white/20 rounded flex items-center justify-center text-2xl text-white">✕</div>
+                                <div class="w-12 h-12 bg-white/20 rounded flex items-center justify-center text-2xl text-white">○</div>
+                                <div class="w-12 h-12 bg-white/20 rounded flex items-center justify-center text-2xl text-white">✕</div>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold mb-2" style="color: var(--text-primary);" data-lang="game_ttt">Крестики-Нолики</h3>
+                            <p class="mb-4" style="color: var(--text-secondary);" data-lang="desc_ttt">Играй против бота. Собери три в ряд!</p>
+                            <button class="w-full btn-primary py-3 rounded-lg text-white font-semibold" data-lang="play">Играть</button>
+                        </div>
+                    </div>
+
+                    <!-- Chess Card -->
+                    <div class="game-card rounded-2xl overflow-hidden cursor-pointer" onclick="showGame('chess')">
+                        <div class="h-48 flex items-center justify-center" style="background: linear-gradient(135deg, #4b5563, var(--bg-secondary));">
+                            <div class="text-6xl text-white opacity-80">♕♖♗♘♙</div>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold mb-2" style="color: var(--text-primary);" data-lang="game_chess">Шахматы</h3>
+                            <p class="mb-4" style="color: var(--text-secondary);" data-lang="desc_chess">Стратегическая игра против бота.</p>
+                            <button class="w-full btn-primary py-3 rounded-lg text-white font-semibold" data-lang="play">Играть</button>
+                        </div>
+                    </div>
+
+                    <!-- Dice Card -->
+                    <div class="game-card rounded-2xl overflow-hidden cursor-pointer" onclick="showGame('dice')">
+                        <div class="h-48 flex items-center justify-center" style="background: linear-gradient(135deg, #f59e0b, var(--bg-secondary));">
+                            <div class="flex space-x-4">
+                                <div class="w-16 h-16 bg-white rounded-lg flex items-center justify-center text-4xl text-black shadow-lg">⚀</div>
+                                <div class="w-16 h-16 bg-white rounded-lg flex items-center justify-center text-4xl text-black shadow-lg">⚅</div>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold mb-2" style="color: var(--text-primary);" data-lang="game_dice">Кости</h3>
+                            <p class="mb-4" style="color: var(--text-secondary);" data-lang="desc_dice">Бросай кости и испытай свою удачу!</p>
+                            <button class="w-full btn-primary py-3 rounded-lg text-white font-semibold" data-lang="play">Играть</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="py-8 mt-16 border-t transition-colors duration-300" style="background-color: var(--bg-secondary); border-color: var(--border-color);">
+            <div class="max-w-7xl mx-auto px-4 text-center">
+                <p style="color: var(--text-secondary);">© 2026 miniGames.io. <span data-lang="rights">Все права защищены.</span></p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Tic Tac Toe Game -->
+    <div id="tictactoePage" class="hidden fade-in min-h-screen py-12">
+        <div class="max-w-2xl mx-auto px-4">
+            <div class="text-center mb-8">
+                <h2 class="text-4xl font-bold mb-4" style="color: var(--text-primary);" data-lang="game_ttt">Крестики-Нолики</h2>
+                <div class="flex justify-center items-center space-x-4 mb-4">
+                    <div class="px-4 py-2 rounded-lg" style="background-color: var(--bg-secondary); border: 1px solid var(--border-color);">
+                        <span style="color: var(--accent-color); font-weight: bold;">X:</span> <span id="tttScorePlayer" style="color: var(--text-primary);">0</span>
+                    </div>
+                    <div class="px-4 py-2 rounded-lg" style="background-color: var(--bg-secondary); border: 1px solid var(--border-color);">
+                        <span style="color: #3b82f6; font-weight: bold;">O:</span> <span id="tttScoreBot" style="color: var(--text-primary);">0</span>
+                    </div>
+                </div>
+                <p id="tttStatus" class="text-xl mb-4" style="color: var(--text-secondary);" data-lang="your_turn">Ваш ход (X)</p>
+            </div>
+            
+            <div class="p-8 rounded-2xl shadow-2xl" style="background-color: var(--bg-secondary); border: 1px solid var(--border-color);">
+                <div id="tttBoard" class="grid grid-cols-3 gap-3 max-w-md mx-auto">
+                    <!-- Cells will be generated by JS -->
+                </div>
+                
+                <div class="mt-6 flex justify-center space-x-4">
+                    <button onclick="resetTicTacToe()" class="btn-primary px-6 py-3 rounded-lg text-white font-semibold" data-lang="new_game">Новая игра</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chess Game -->
+    <div id="chessPage" class="hidden fade-in min-h-screen py-12">
+        <div class="max-w-4xl mx-auto px-4 text-center">
+            <div class="mb-8">
+                <h2 class="text-4xl font-bold mb-4" style="color: var(--text-primary);" data-lang="game_chess">Шахматы</h2>
+                <p id="chessStatus" class="text-xl mb-4" style="color: var(--text-secondary);" data-lang="chess_status">Ваш ход (Белые)</p>
+            </div>
+            
+            <div class="chess-board-container">
+                <div id="chessBoard" class="chess-board">
+                    <!-- Board will be generated by JS -->
+                </div>
+            </div>
+            
+            <div class="mt-6 flex justify-center space-x-4">
+                <button onclick="resetChess()" class="btn-primary px-6 py-3 rounded-lg text-white font-semibold" data-lang="new_game">Новая игра</button>
+            </div>
+            
+            <div class="mt-8 text-center" style="color: var(--text-secondary);">
+                <p data-lang="chess_hint">Нажмите на фигуру, чтобы увидеть возможные ходы</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dice Game -->
+    <div id="dicePage" class="hidden fade-in min-h-screen py-12">
+        <div class="max-w-2xl mx-auto px-4">
+            <div class="text-center mb-8">
+                <h2 class="text-4xl font-bold mb-4" style="color: var(--text-primary);" data-lang="game_dice">Кости</h2>
+                <div class="flex justify-center items-center space-x-4 mb-4">
+                    <div class="px-4 py-2 rounded-lg" style="background-color: var(--bg-secondary); border: 1px solid var(--border-color);">
+                        <span style="color: var(--accent-color); font-weight: bold;" data-lang="you">Вы:</span> <span id="diceScore1" style="color: var(--text-primary);">0</span>
+                    </div>
+                    <div class="px-4 py-2 rounded-lg" style="background-color: var(--bg-secondary); border: 1px solid var(--border-color);">
+                        <span style="color: #3b82f6; font-weight: bold;" data-lang="bot">Бот:</span> <span id="diceScore2" style="color: var(--text-primary);">0</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-8 rounded-2xl shadow-2xl" style="background-color: var(--bg-secondary); border: 1px solid var(--border-color);">
+                <div class="flex justify-center items-center space-x-8 mb-8">
+                    <div id="dice1" class="dice w-24 h-24 bg-white rounded-2xl flex items-center justify-center text-6xl text-black shadow-lg"></div>
+                    <div id="dice2" class="dice w-24 h-24 bg-white rounded-2xl flex items-center justify-center text-6xl text-black shadow-lg"></div>
+                </div>
+                
+                <div class="text-center mb-6">
+                    <p id="diceResult" class="text-2xl font-bold mb-2" style="color: var(--text-primary);" data-lang="roll_msg">Бросьте кости!</p>
+                    <p id="diceTotal" class="text-xl" style="color: var(--text-secondary);">Сумма: 0</p>
+                </div>
+                
+                <div class="flex justify-center space-x-4">
+                    <button onclick="rollDice()" class="btn-primary px-8 py-4 rounded-lg text-white font-semibold text-lg" data-lang="roll_btn">Бросить кости</button>
+                    <button onclick="resetDice()" class="px-6 py-4 rounded-lg text-white font-semibold transition hover:bg-opacity-80" style="background-color: #4b5563;" data-lang="reset_btn">Сбросить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ================= LOCALIZATION & THEMES =================
+        const translations = {
+            ru: {
+                home: "Главная",
+                tictactoe: "Крестики-Нолики",
+                chess: "Шахматы",
+                dice: "Кости",
+                settings: "Настройки",
+                help: "Помощь",
+                support_title: "Поддержка и Помощь",
+                email_support: "Email Поддержка",
+                copyright_footer: "© 2026 NIK-dev001. Все права защищены.",
+                language: "Язык",
+                theme: "Тема оформления",
+                theme_dark: "Dark Classic (Red)",
+                theme_galaxy: "Galaxy Purple",
+                theme_blue: "Blue Classic",
+                theme_white: "White Light",
+                hero_title_1: "Играй в",
+                hero_title_2: "мини-игры",
+                hero_desc: "Коллекция увлекательных браузерных игр с ботами. Выбирай, играй и побеждай!",
+                start_game: "Начать игру",
+                our_games: "Наши игры",
+                game_ttt: "Крестики-Нолики",
+                desc_ttt: "Играй против бота. Собери три в ряд!",
+                game_chess: "Шахматы",
+                desc_chess: "Стратегическая игра против бота.",
+                game_dice: "Кости",
+                desc_dice: "Бросай кости и испытай свою удачу!",
+                play: "Играть",
+                rights: "Все права защищены.",
+                your_turn: "Ваш ход (X)",
+                new_game: "Новая игра",
+                chess_status: "Ваш ход (Белые)",
+                chess_hint: "Нажмите на фигуру, чтобы увидеть возможные ходы",
+                you: "Вы",
+                bot: "Бот",
+                roll_msg: "Бросьте кости!",
+                roll_btn: "Бросить кости",
+                reset_btn: "Сбросить",
+                bot_thinking: "Бот думает...",
+                player_won: "Вы победили!",
+                bot_won: "Бот победил!",
+                draw: "Ничья!",
+                chess_bot_turn: "Ход бота (Чёрные)...",
+                chess_no_moves: "Вы победили! У бота нет ходов.",
+                chess_king_lost: "Бот победил! Ваш король съеден."
+            },
+            en: {
+                home: "Home",
+                tictactoe: "Tic-Tac-Toe",
+                chess: "Chess",
+                dice: "Dice",
+                settings: "Settings",
+                help: "Help",
+                support_title: "Support & Help",
+                email_support: "Email Support",
+                copyright_footer: "© 2026 NIK-dev001. All rights reserved.",
+                language: "Language",
+                theme: "Theme",
+                theme_dark: "Dark Classic (Red)",
+                theme_galaxy: "Galaxy Purple",
+                theme_blue: "Blue Classic",
+                theme_white: "White Light",
+                hero_title_1: "Play",
+                hero_title_2: "Mini-Games",
+                hero_desc: "Collection of exciting browser games with bots. Choose, play and win!",
+                start_game: "Start Game",
+                our_games: "Our Games",
+                game_ttt: "Tic-Tac-Toe",
+                desc_ttt: "Play against the bot. Get three in a row!",
+                game_chess: "Chess",
+                desc_chess: "Strategic game against the bot.",
+                game_dice: "Dice",
+                desc_dice: "Roll the dice and test your luck!",
+                play: "Play",
+                rights: "All rights reserved.",
+                your_turn: "Your turn (X)",
+                new_game: "New Game",
+                chess_status: "Your turn (White)",
+                chess_hint: "Click on a piece to see possible moves",
+                you: "You",
+                bot: "Bot",
+                roll_msg: "Roll the dice!",
+                roll_btn: "Roll Dice",
+                reset_btn: "Reset",
+                bot_thinking: "Bot is thinking...",
+                player_won: "You won!",
+                bot_won: "Bot won!",
+                draw: "Draw!",
+                chess_bot_turn: "Bot's turn (Black)...",
+                chess_no_moves: "You won! Bot has no moves.",
+                chess_king_lost: "Bot won! Your king was captured."
+            }
+        };
+
+        let currentLang = 'ru';
+        let currentTheme = 'dark';
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            document.documentElement.lang = lang;
+            
+            // Update UI classes for active state
+            document.getElementById('lang-ru').classList.toggle('active', lang === 'ru');
+            document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+            
+            // Update text content
+            document.querySelectorAll('[data-lang]').forEach(el => {
+                const key = el.getAttribute('data-lang');
+                if (translations[lang][key]) {
+                    el.textContent = translations[lang][key];
+                }
+            });
+
+            // Update dynamic texts if games are open
+            updateDynamicTexts();
+        }
+
+        function setTheme(theme) {
+            currentTheme = theme;
+            document.body.className = `theme-${theme} min-h-screen`;
+            
+            // Update UI classes for active state
+            ['dark', 'galaxy', 'blue', 'white'].forEach(t => {
+                const el = document.getElementById(`theme-${t}`);
+                if (el) {
+                    el.classList.toggle('active', t === theme);
+                    const indicator = el.querySelector('.rounded-full.border-2:last-child');
+                    if (indicator) {
+                        if (t === theme) {
+                            indicator.style.borderColor = 'var(--accent-color)';
+                        } else {
+                            indicator.style.borderColor = 'transparent';
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateDynamicTexts() {
+            // Tic Tac Toe
+            if (!document.getElementById('tictactoePage').classList.contains('hidden')) {
+                const statusEl = document.getElementById('tttStatus');
+                if (statusEl.textContent.includes('победил') || statusEl.textContent.includes('won')) return;
+                statusEl.textContent = translations[currentLang].your_turn;
+            }
+            
+            // Chess
+            if (!document.getElementById('chessPage').classList.contains('hidden')) {
+                const statusEl = document.getElementById('chessStatus');
+                if (isPlayerTurn) {
+                    statusEl.textContent = translations[currentLang].chess_status;
+                } else {
+                    statusEl.textContent = translations[currentLang].chess_bot_turn;
+                }
+            }
+        }
+
+        // ================= NAVIGATION =================
+        function showHome() {
+            hideAllPages();
+            document.getElementById('homePage').classList.remove('hidden');
+        }
+
+        function showGame(game) {
+            hideAllPages();
+            if (game === 'tictactoe') {
+                document.getElementById('tictactoePage').classList.remove('hidden');
+                initTicTacToe();
+            } else if (game === 'chess') {
+                document.getElementById('chessPage').classList.remove('hidden');
+                initChess();
+            } else if (game === 'dice') {
+                document.getElementById('dicePage').classList.remove('hidden');
+            }
+        }
+
+        function hideAllPages() {
+            document.getElementById('homePage').classList.add('hidden');
+            document.getElementById('tictactoePage').classList.add('hidden');
+            document.getElementById('chessPage').classList.add('hidden');
+            document.getElementById('dicePage').classList.add('hidden');
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            menu.classList.toggle('hidden');
+        }
+
+        // Settings Modal
+        function openSettings() {
+            document.getElementById('settingsModal').classList.remove('hidden');
+        }
+
+        function closeSettings() {
+            document.getElementById('settingsModal').classList.add('hidden');
+        }
+
+        // Help Modal
+        function openHelpModal() {
+            document.getElementById('helpModal').classList.remove('hidden');
+        }
+
+        function closeHelpModal() {
+            document.getElementById('helpModal').classList.add('hidden');
+        }
+
+        // Close modals on outside click
+        document.getElementById('settingsModal').addEventListener('click', (e) => {
+            if (e.target.id === 'settingsModal') closeSettings();
+        });
+        document.getElementById('helpModal').addEventListener('click', (e) => {
+            if (e.target.id === 'helpModal') closeHelpModal();
+        });
+
+        // ================= TIC TAC TOE =================
+        let tttBoard = Array(9).fill('');
+        let tttGameActive = true;
+        let tttScores = { player: 0, bot: 0 };
+        const PLAYER = 'X';
+        const BOT = 'O';
+
+        function initTicTacToe() {
+            const boardEl = document.getElementById('tttBoard');
+            boardEl.innerHTML = '';
+            tttBoard = Array(9).fill('');
+            tttGameActive = true;
+            document.getElementById('tttStatus').textContent = translations[currentLang].your_turn;
+            document.getElementById('tttStatus').style.color = 'var(--text-secondary)';
+            
+            for (let i = 0; i < 9; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell w-full aspect-square rounded-lg flex items-center justify-center text-4xl font-bold cursor-pointer hover:bg-opacity-10 hover:bg-gray-500 transition';
+                cell.style.backgroundColor = 'var(--bg-primary)';
+                cell.style.border = '1px solid var(--border-color)';
+                cell.dataset.index = i;
+                cell.addEventListener('click', () => handleTicTacToeClick(i));
+                boardEl.appendChild(cell);
+            }
+        }
+
+        function handleTicTacToeClick(index) {
+            if (!tttGameActive || tttBoard[index] !== '') return;
+            
+            makeMove(index, PLAYER);
+            
+            if (checkWinner(PLAYER)) {
+                endGame(translations[currentLang].player_won);
+                tttScores.player++;
+                updateTicTacToeScores();
+                return;
+            }
+            
+            if (tttBoard.every(cell => cell !== '')) {
+                endGame(translations[currentLang].draw);
+                return;
+            }
+            
+            document.getElementById('tttStatus').textContent = translations[currentLang].bot_thinking;
+            setTimeout(() => {
+                const botMove = getBotMove();
+                makeMove(botMove, BOT);
+                
+                if (checkWinner(BOT)) {
+                    endGame(translations[currentLang].bot_won);
+                    tttScores.bot++;
+                    updateTicTacToeScores();
+                    return;
+                }
+                
+                if (tttBoard.every(cell => cell !== '')) {
+                    endGame(translations[currentLang].draw);
+                    return;
+                }
+                
+                document.getElementById('tttStatus').textContent = translations[currentLang].your_turn;
+            }, 500);
+        }
+
+        function makeMove(index, player) {
+            tttBoard[index] = player;
+            const cells = document.querySelectorAll('#tttBoard .cell');
+            cells[index].textContent = player;
+            cells[index].style.color = player === PLAYER ? 'var(--accent-color)' : '#3b82f6';
+        }
+
+        function checkWinner(player) {
+            const wins = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8],
+                [0, 3, 6], [1, 4, 7], [2, 5, 8],
+                [0, 4, 8], [2, 4, 6]
+            ];
+            return wins.some(combo => combo.every(i => tttBoard[i] === player));
+        }
+
+        function endGame(message) {
+            const statusEl = document.getElementById('tttStatus');
+            statusEl.textContent = message;
+            statusEl.style.color = message.includes('победил') || message.includes('won') && !message.includes('Бот') && !message.includes('Bot') ? 'var(--accent-color)' : '#3b82f6';
+            if (message.includes('Бот') || message.includes('Bot')) statusEl.style.color = '#3b82f6';
+            if (message.includes('Ничья') || message.includes('Draw')) statusEl.style.color = 'var(--text-secondary)';
+            tttGameActive = false;
+        }
+
+        function updateTicTacToeScores() {
+            document.getElementById('tttScorePlayer').textContent = tttScores.player;
+            document.getElementById('tttScoreBot').textContent = tttScores.bot;
+        }
+
+        function resetTicTacToe() {
+            initTicTacToe();
+        }
+
+        function getBotMove() {
+            const playOptimal = Math.random() < 0.44;
+            return playOptimal ? getBestMove() : getRandomMove();
+        }
+
+        function getRandomMove() {
+            const available = [];
+            for (let i = 0; i < 9; i++) {
+                if (tttBoard[i] === '') available.push(i);
+            }
+            return available[Math.floor(Math.random() * available.length)];
+        }
+
+        function getBestMove() {
+            let bestScore = -Infinity;
+            let move;
+            for (let i = 0; i < 9; i++) {
+                if (tttBoard[i] === '') {
+                    tttBoard[i] = BOT;
+                    let score = minimax(tttBoard, 0, false);
+                    tttBoard[i] = '';
+                    if (score > bestScore) {
+                        bestScore = score;
+                        move = i;
+                    }
+                }
+            }
+            return move;
+        }
+
+        function minimax(board, depth, isMaximizing) {
+            if (checkWinner(BOT)) return 10 - depth;
+            if (checkWinner(PLAYER)) return depth - 10;
+            if (board.every(cell => cell !== '')) return 0;
+            
+            if (isMaximizing) {
+                let bestScore = -Infinity;
+                for (let i = 0; i < 9; i++) {
+                    if (board[i] === '') {
+                        board[i] = BOT;
+                        let score = minimax(board, depth + 1, false);
+                        board[i] = '';
+                        bestScore = Math.max(score, bestScore);
+                    }
+                }
+                return bestScore;
+            } else {
+                let bestScore = Infinity;
+                for (let i = 0; i < 9; i++) {
+                    if (board[i] === '') {
+                        board[i] = PLAYER;
+                        let score = minimax(board, depth + 1, true);
+                        board[i] = '';
+                        bestScore = Math.min(score, bestScore);
+                    }
+                }
+                return bestScore;
+            }
+        }
+
+        // ================= CHESS =================
+        let chessBoardState = [];
+        let selectedCell = null;
+        let validMoves = [];
+        let isPlayerTurn = true;
+
+        const INITIAL_BOARD = [
+            ['♜', '♞', '♝', '♛', '♚', '♝', '♞', '♜'],
+            ['♟', '♟', '♟', '♟', '♟', '♟', '♟', '♟'],
+            ['', '', '', '', '', '', '', ''],
+            ['', '', '', '', '', '', '', ''],
+            ['', '', '', '', '', '', '', ''],
+            ['', '', '', '', '', '', '', ''],
+            ['♙', '♙', '♙', '♙', '♙', '♙', '♙', '♙'],
+            ['♖', '♘', '♗', '♕', '♔', '♗', '♘', '♖']
+        ];
+
+        function initChess() {
+            chessBoardState = INITIAL_BOARD.map(row => [...row]);
+            selectedCell = null;
+            validMoves = [];
+            isPlayerTurn = true;
+            document.getElementById('chessStatus').textContent = translations[currentLang].chess_status;
+            renderChessBoard();
+        }
+
+        function renderChessBoard() {
+            const boardEl = document.getElementById('chessBoard');
+            boardEl.innerHTML = '';
+            
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const cell = document.createElement('div');
+                    const isDark = (row + col) % 2 === 1;
+                    
+                    let className = `chess-cell`;
+                    className += isDark ? ' dark' : ' light';
+                    
+                    if (selectedCell && selectedCell.row === row && selectedCell.col === col) {
+                        className += ' selected';
+                    }
+                    
+                    const isValidMove = validMoves.some(m => m.row === row && m.col === col);
+                    if (isValidMove) {
+                        if (chessBoardState[row][col] !== '') {
+                            className += ' valid-capture';
+                        } else {
+                            className += ' valid-move';
+                        }
+                    }
+                    
+                    cell.className = className;
+                    
+                    const piece = chessBoardState[row][col];
+                    if (piece) {
+                        const span = document.createElement('span');
+                        span.textContent = piece;
+                        span.className = 'chess-piece';
+                        
+                        const isWhitePiece = '♔♕♖♗♘♙'.includes(piece);
+                        if (isWhitePiece) {
+                            span.classList.add('chess-piece-white');
+                        } else {
+                            span.classList.add('chess-piece-black');
+                        }
+                        
+                        cell.appendChild(span);
+                    }
+                    
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+                    cell.addEventListener('click', () => handleChessClick(row, col));
+                    boardEl.appendChild(cell);
+                }
+            }
+        }
+
+        function handleChessClick(row, col) {
+            if (!isPlayerTurn) return;
+            
+            const piece = chessBoardState[row][col];
+            const isWhitePiece = piece && '♔♕♖♗♘♙'.includes(piece);
+            
+            if (selectedCell && validMoves.some(m => m.row === row && m.col === col)) {
+                chessBoardState[row][col] = chessBoardState[selectedCell.row][selectedCell.col];
+                chessBoardState[selectedCell.row][selectedCell.col] = '';
+                
+                if (chessBoardState[row][col] === '♙' && row === 0) {
+                    chessBoardState[row][col] = '';
+                }
+                
+                selectedCell = null;
+                validMoves = [];
+                isPlayerTurn = false;
+                document.getElementById('chessStatus').textContent = translations[currentLang].chess_bot_turn;
+                renderChessBoard();
+                
+                if (isKingCaptured('white')) {
+                    document.getElementById('chessStatus').textContent = translations[currentLang].chess_king_lost;
+                    return;
+                }
+                
+                setTimeout(makeBotMove, 800);
+                return;
+            }
+            
+            if (piece && isWhitePiece) {
+                selectedCell = { row, col };
+                validMoves = getValidMoves(row, col, piece);
+                renderChessBoard();
+            } else {
+                selectedCell = null;
+                validMoves = [];
+                renderChessBoard();
+            }
+        }
+
+        function getValidMoves(row, col, piece) {
+            const moves = [];
+            const isWhite = '♔♕♖♗♘♙'.includes(piece);
+            
+            switch(piece) {
+                case '♙':
+                    if (row > 0 && chessBoardState[row - 1][col] === '') {
+                        moves.push({ row: row - 1, col });
+                        if (row === 6 && chessBoardState[row - 2][col] === '') {
+                            moves.push({ row: row - 2, col });
+                        }
+                    }
+                    if (row > 0 && col > 0 && chessBoardState[row - 1][col - 1] !== '' && !'♔♕♖♗♘♙'.includes(chessBoardState[row - 1][col - 1])) {
+                        moves.push({ row: row - 1, col: col - 1 });
+                    }
+                    if (row > 0 && col < 7 && chessBoardState[row - 1][col + 1] !== '' && !'♕♖♗♘♙'.includes(chessBoardState[row - 1][col + 1])) {
+                        moves.push({ row: row - 1, col: col + 1 });
+                    }
+                    break;
+                case '♟':
+                    if (row < 7 && chessBoardState[row + 1][col] === '') {
+                        moves.push({ row: row + 1, col });
+                        if (row === 1 && chessBoardState[row + 2][col] === '') {
+                            moves.push({ row: row + 2, col });
+                        }
+                    }
+                    if (row < 7 && col > 0 && chessBoardState[row + 1][col - 1] !== '' && '♔♕♖♗♘♙'.includes(chessBoardState[row + 1][col - 1])) {
+                        moves.push({ row: row + 1, col: col - 1 });
+                    }
+                    if (row < 7 && col < 7 && chessBoardState[row + 1][col + 1] !== '' && '♔♕♖♗♘♙'.includes(chessBoardState[row + 1][col + 1])) {
+                        moves.push({ row: row + 1, col: col + 1 });
+                    }
+                    break;
+                case '♖': case '':
+                    addLinearMoves(moves, row, col, [[0, 1], [0, -1], [1, 0], [-1, 0]], isWhite);
+                    break;
+                case '♗': case '':
+                    addLinearMoves(moves, row, col, [[1, 1], [1, -1], [-1, 1], [-1, -1]], isWhite);
+                    break;
+                case '♕': case '':
+                    addLinearMoves(moves, row, col, [[0, 1], [0, -1], [1, 0], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]], isWhite);
+                    break;
+                case '♘': case '♞':
+                    const knightMoves = [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [1, -2], [1, 2], [2, -1], [2, 1]];
+                    for (const [dr, dc] of knightMoves) {
+                        const newRow = row + dr;
+                        const newCol = col + dc;
+                        if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8) {
+                            const target = chessBoardState[newRow][newCol];
+                            if (target === '' || (isWhite && !'♔♖♗♘♙'.includes(target)) || (!isWhite && '♔♖♗♘♙'.includes(target))) {
+                                moves.push({ row: newRow, col: newCol });
+                            }
+                        }
+                    }
+                    break;
+                case '♔': case '♚':
+                    const kingMoves = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]];
+                    for (const [dr, dc] of kingMoves) {
+                        const newRow = row + dr;
+                        const newCol = col + dc;
+                        if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8) {
+                            const target = chessBoardState[newRow][newCol];
+                            if (target === '' || (isWhite && !'♔♕♖♗♘♙'.includes(target)) || (!isWhite && '♔♖♗♘♙'.includes(target))) {
+                                moves.push({ row: newRow, col: newCol });
+                            }
+                        }
+                    }
+                    break;
+            }
+            return moves;
+        }
+
+        function addLinearMoves(moves, row, col, directions, isWhite) {
+            for (const [dr, dc] of directions) {
+                let newRow = row + dr;
+                let newCol = col + dc;
+                while (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8) {
+                    const target = chessBoardState[newRow][newCol];
+                    if (target === '') {
+                        moves.push({ row: newRow, col: newCol });
+                    } else {
+                        if (isWhite && !'♔♕♖♘♙'.includes(target)) {
+                            moves.push({ row: newRow, col: newCol });
+                        } else if (!isWhite && '♔♕♖♗♘♙'.includes(target)) {
+                            moves.push({ row: newRow, col: newCol });
+                        }
+                        break;
+                    }
+                    newRow += dr;
+                    newCol += dc;
+                }
+            }
+        }
+
+        function isKingCaptured(color) {
+            const king = color === 'white' ? '♔' : '♚';
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    if (chessBoardState[row][col] === king) return false;
+                }
+            }
+            return true;
+        }
+
+        function makeBotMove() {
+            const allMoves = [];
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const piece = chessBoardState[row][col];
+                    if (piece && '♛♜♝♞♟'.includes(piece)) {
+                        const moves = getValidMoves(row, col, piece);
+                        for (const move of moves) {
+                            allMoves.push({ from: { row, col }, to: move, piece });
+                        }
+                    }
+                }
+            }
+            
+            if (allMoves.length === 0) {
+                document.getElementById('chessStatus').textContent = translations[currentLang].chess_no_moves;
+                isPlayerTurn = false;
+                return;
+            }
+            
+            const captures = allMoves.filter(m => chessBoardState[m.to.row][m.to.col] !== '');
+            const move = captures.length > 0 ? captures[Math.floor(Math.random() * captures.length)] : allMoves[Math.floor(Math.random() * allMoves.length)];
+            
+            chessBoardState[move.to.row][move.to.col] = chessBoardState[move.from.row][move.from.col];
+            chessBoardState[move.from.row][move.from.col] = '';
+            
+            if (chessBoardState[move.to.row][move.to.col] === '♟' && move.to.row === 7) {
+                chessBoardState[move.to.row][move.to.col] = '♛';
+            }
+            
+            if (isKingCaptured('white')) {
+                document.getElementById('chessStatus').textContent = translations[currentLang].chess_king_lost;
+            } else {
+                document.getElementById('chessStatus').textContent = translations[currentLang].chess_status;
+                isPlayerTurn = true;
+            }
+            renderChessBoard();
+        }
+
+        function resetChess() {
+            initChess();
+        }
+
+        // ================= DICE =================
+        let diceScores = { player1: 0, player2: 0 };
+        const diceFaces = ['⚀', '⚁', '', '⚃', '⚄', '⚅'];
+
+        function rollDice() {
+            const dice1El = document.getElementById('dice1');
+            const dice2El = document.getElementById('dice2');
+            
+            dice1El.classList.add('rolling');
+            dice2El.classList.add('rolling');
+            
+            setTimeout(() => {
+                const roll1 = Math.floor(Math.random() * 6) + 1;
+                const roll2 = Math.floor(Math.random() * 6) + 1;
+                
+                dice1El.textContent = diceFaces[roll1 - 1];
+                dice2El.textContent = diceFaces[roll2 - 1];
+                
+                dice1El.classList.remove('rolling');
+                dice2El.classList.remove('rolling');
+                
+                const total = roll1 + roll2;
+                document.getElementById('diceResult').textContent = `${translations[currentLang].you}: ${roll1}, ${translations[currentLang].bot}: ${roll2}`;
+                document.getElementById('diceTotal').textContent = `${translations[currentLang].sum || 'Sum'}: ${total}`;
+                
+                if (roll1 > roll2) {
+                    diceScores.player1++;
+                } else if (roll2 > roll1) {
+                    diceScores.player2++;
+                }
+                
+                updateDiceScores();
+            }, 500);
+        }
+
+        function updateDiceScores() {
+            document.getElementById('diceScore1').textContent = diceScores.player1;
+            document.getElementById('diceScore2').textContent = diceScores.player2;
+        }
+
+        function resetDice() {
+            diceScores = { player1: 0, player2: 0 };
+            updateDiceScores();
+            document.getElementById('dice1').textContent = '⚀';
+            document.getElementById('dice2').textContent = '';
+            document.getElementById('diceResult').textContent = translations[currentLang].roll_msg;
+            document.getElementById('diceTotal').textContent = 'Sum: 0';
+        }
+
+        // Initialize
+        showHome();
+        setLanguage('ru');
+        setTheme('dark');
+    </script>
+</body>
+</html>
