@@ -337,7 +337,7 @@
                         <span class="font-medium" style="color: var(--text-primary);">Русский</span>
                     </div>
                     <div class="setting-option p-4 rounded-xl border-2 flex items-center justify-center space-x-2" onclick="setLanguage('en')" id="lang-en">
-                        <span class="text-2xl">🇬🇧</span>
+                        <span class="text-2xl">🇧</span>
                         <span class="font-medium" style="color: var(--text-primary);">English</span>
                     </div>
                 </div>
@@ -418,7 +418,7 @@
                                 <div class="w-12 h-12 bg-white/20 rounded flex items-center justify-center text-2xl text-white">○</div>
                                 <div class="w-12 h-12 bg-white/20 rounded flex items-center justify-center text-2xl text-white">✕</div>
                                 <div class="w-12 h-12 bg-white/20 rounded flex items-center justify-center text-2xl text-white">○</div>
-                                <div class="w-12 h-12 bg-white/20 rounded flex items-center justify-center text-2xl text-white">✕</div>
+                                <div class="w-12 h-12 bg-white/20 rounded flex items-center justify-center text-2xl text-white"></div>
                                 <div class="w-12 h-12 bg-white/20 rounded flex items-center justify-center text-2xl text-white">○</div>
                                 <div class="w-12 h-12 bg-white/20 rounded flex items-center justify-center text-2xl text-white">✕</div>
                             </div>
@@ -555,7 +555,7 @@
     </div>
 
     <script>
-        // ================= LOCALIZATION & THEMES =================
+        // ================= LOCALIZATION & THEMES & COOKIES =================
         const translations = {
             ru: {
                 home: "Главная",
@@ -654,7 +654,29 @@
         let currentLang = 'ru';
         let currentTheme = 'dark';
 
-        function setLanguage(lang) {
+        // --- COOKIE / LOCALSTORAGE LOGIC ---
+        function saveSettings() {
+            const settings = {
+                lang: currentLang,
+                theme: currentTheme
+            };
+            localStorage.setItem('settings.save.cookie', JSON.stringify(settings));
+        }
+
+        function loadSettings() {
+            const saved = localStorage.getItem('settings.save.cookie');
+            if (saved) {
+                try {
+                    const settings = JSON.parse(saved);
+                    if (settings.lang) setLanguage(settings.lang, false); // false = don't save again yet
+                    if (settings.theme) setTheme(settings.theme, false);
+                } catch (e) {
+                    console.error("Error loading settings", e);
+                }
+            }
+        }
+
+        function setLanguage(lang, save = true) {
             currentLang = lang;
             document.documentElement.lang = lang;
             
@@ -672,9 +694,11 @@
 
             // Update dynamic texts if games are open
             updateDynamicTexts();
+
+            if (save) saveSettings();
         }
 
-        function setTheme(theme) {
+        function setTheme(theme, save = true) {
             currentTheme = theme;
             document.body.className = `theme-${theme} min-h-screen`;
             
@@ -693,6 +717,8 @@
                     }
                 }
             });
+
+            if (save) saveSettings();
         }
 
         function updateDynamicTexts() {
@@ -936,7 +962,7 @@
         let isPlayerTurn = true;
 
         const INITIAL_BOARD = [
-            ['♜', '♞', '♝', '♛', '♚', '♝', '♞', '♜'],
+            ['♜', '', '♝', '♛', '', '♝', '♞', ''],
             ['♟', '♟', '♟', '♟', '♟', '♟', '♟', '♟'],
             ['', '', '', '', '', '', '', ''],
             ['', '', '', '', '', '', '', ''],
@@ -1010,7 +1036,7 @@
             if (!isPlayerTurn) return;
             
             const piece = chessBoardState[row][col];
-            const isWhitePiece = piece && '♔♕♖♗♘♙'.includes(piece);
+            const isWhitePiece = piece && '♔♖♗♘♙'.includes(piece);
             
             if (selectedCell && validMoves.some(m => m.row === row && m.col === col)) {
                 chessBoardState[row][col] = chessBoardState[selectedCell.row][selectedCell.col];
@@ -1048,7 +1074,7 @@
 
         function getValidMoves(row, col, piece) {
             const moves = [];
-            const isWhite = '♔♕♖♗♘♙'.includes(piece);
+            const isWhite = '♕♖♗♘♙'.includes(piece);
             
             switch(piece) {
                 case '♙':
@@ -1101,7 +1127,7 @@
                         }
                     }
                     break;
-                case '♔': case '♚':
+                case '': case '♚':
                     const kingMoves = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]];
                     for (const [dr, dc] of kingMoves) {
                         const newRow = row + dr;
@@ -1129,7 +1155,7 @@
                     } else {
                         if (isWhite && !'♔♕♖♘♙'.includes(target)) {
                             moves.push({ row: newRow, col: newCol });
-                        } else if (!isWhite && '♔♕♖♗♘♙'.includes(target)) {
+                        } else if (!isWhite && '♕♖♗♘♙'.includes(target)) {
                             moves.push({ row: newRow, col: newCol });
                         }
                         break;
@@ -1195,7 +1221,7 @@
 
         // ================= DICE =================
         let diceScores = { player1: 0, player2: 0 };
-        const diceFaces = ['⚀', '⚁', '', '⚃', '⚄', '⚅'];
+        const diceFaces = ['⚀', '', '', '⚃', '', '⚅'];
 
         function rollDice() {
             const dice1El = document.getElementById('dice1');
@@ -1236,16 +1262,17 @@
         function resetDice() {
             diceScores = { player1: 0, player2: 0 };
             updateDiceScores();
-            document.getElementById('dice1').textContent = '⚀';
+            document.getElementById('dice1').textContent = '';
             document.getElementById('dice2').textContent = '';
             document.getElementById('diceResult').textContent = translations[currentLang].roll_msg;
             document.getElementById('diceTotal').textContent = 'Sum: 0';
         }
 
         // Initialize
-        showHome();
-        setLanguage('ru');
-        setTheme('dark');
+        window.onload = function() {
+            loadSettings(); // Load cookies/localStorage on start
+            showHome();
+        };
     </script>
 </body>
 </html>
